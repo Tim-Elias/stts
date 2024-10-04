@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Manage Prompts</h2>
+
+<a href="/add_prompts" class="btn btn-primary mb-3">Add New Prompt</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Text</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="promptList">
+        <!-- Промпты будут загружены через JS -->
+    </tbody>
+</table>
+
+<!-- Подключение внешних JavaScript файлов -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/static/js/manage_prompts.js"></script>
+
+{% endblock %}

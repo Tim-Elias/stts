@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/static/js/transcription_result.js"></script>
+
+<h2>Ваши транскрипции</h2>
+
+<table class="table table-striped" id="transcriptionsTable">
+    <thead>
+        <tr>
+            <th>ID транскрипции</th>
+            <th>Текст</th>
+            <th>Анализ</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Здесь будут добавлены транскрипции -->
+        <tr>
+            <td>123</td>
+            <td>Это краткий текст транскрипции...</td>
+            <td>Это краткий анализ...</td>
+            <td><button class="btn btn-primary viewTranscription" data-audio-id="123">Просмотр</button></td>
+        </tr>
+        <!-- Другие строки... -->
+    </tbody>
+</table>
+
+
+
+
+<div id="loadingIndicator" style="display:none;">Загрузка...</div>
+
+<button id="backButton" class="btn btn-secondary mt-4">Назад</button>
+{% endblock %}

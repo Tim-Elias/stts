@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Account | Tiacore{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mt-5">Личный кабинет</h2>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/account.js"></script> 
+    <!-- Отображение имени пользователя и баланса -->
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h4>Имя пользователя: <strong id="username">Загрузка...</strong></h4>
+        <h4>Баланс: <strong>1000</strong> (в условных единицах)</h4>
+    </div>
+
+
+    <!-- Панель управления -->
+    <div class="row">
+        <div class="col-md-4">
+            <button id="managePrompts" class="btn btn-outline-primary btn-block w-100 mb-3">Управление промптами</button>
+        </div>
+        <div class="col-md-4">
+            <button id="uploadAudio" class="btn btn-outline-primary btn-block w-100 mb-3">Загрузить аудиозаписи</button>
+        </div>
+        <div class="col-md-4">
+            <button id="transcribeAnalyze" class="btn btn-outline-primary btn-block w-100 mb-3">Транскрибация аудио и анализ</button>
+        </div>
+        <div class="col-md-4">
+            <button id="viewResults" class="btn btn-outline-primary btn-block w-100 mb-3">Результаты</button>
+        </div>
+        <div class="col-md-4">
+            <button id="viewHistory" class="btn btn-outline-primary btn-block w-100 mb-3">История действий</button>
+        </div>
+        <div class="col-md-4">
+            <button id="adminPanel" class="btn btn-outline-danger btn-block w-100 mb-3">Административная панель</button>
+        </div>
+    </div>
+
+    <!-- Кнопка выхода -->
+    <div class="d-flex justify-content-end">
+        <button id="logoutButton" class="btn btn-danger mt-3">Выход</button>
+    </div>
+</div>
+{% endblock %}
