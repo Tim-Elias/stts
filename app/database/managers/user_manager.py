@@ -67,3 +67,17 @@ class UserManager:
 
         # Возвращаем найденного пользователя или None, если не найдено
         return user
+    
+    def is_user_admin(self, user_id):
+        """Проверка является ли пользователь admin"""
+        session = self.Session()
+        try:
+            # Получаем пользователя по id
+            user = session.query(User).filter_by(user_id=user_id).first()
+            if user.user_type == 'admin':
+                return True
+            else: 
+                return False
+        finally:
+            # Закрываем сессию в блоке finally, чтобы гарантировать закрытие независимо от результата запроса
+            session.close()

@@ -12,25 +12,22 @@
             <th>ID транскрипции</th>
             <th>Текст</th>
             <th>Анализ</th>
-            <th>Действия</th>
         </tr>
     </thead>
     <tbody>
         <!-- Здесь будут добавлены транскрипции -->
-        <tr>
-            <td>123</td>
-            <td>Это краткий текст транскрипции...</td>
-            <td>Это краткий анализ...</td>
-            <td><button class="btn btn-primary viewTranscription" data-audio-id="123">Просмотр</button></td>
+        <tr class="clickable-row" data-id="${transcription.transcription_id}">
+            <td>${transcription.transcription_id}</td>
+            <td>${transcription.text}</td>
+            <td>${transcription.analysis}</td>
+            
         </tr>
         <!-- Другие строки... -->
     </tbody>
 </table>
 
-
-
-
 <div id="loadingIndicator" style="display:none;">Загрузка...</div>
 
 <button id="backButton" class="btn btn-secondary mt-4">Назад</button>
+
 {% endblock %}

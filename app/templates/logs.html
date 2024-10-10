@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/static/js/logs.js"></script>
+<div class="container">
+    <h2>Application Logs</h2>
+    <div id="logs-container" style="overflow-y: auto; height: 500px; border: 1px solid #ccc; padding: 10px; white-space: pre-wrap;">
+        Загрузка логов...
+    </div>
+</div>
+
+
+<button id="backButton" class="btn btn-secondary mt-4">Назад</button>
+{% endblock %}

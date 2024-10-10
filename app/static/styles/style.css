@@ -3,8 +3,26 @@ body {
     font-family: 'Arial', sans-serif;
     background-color: #f9f9f9; /* Светлый фон для контраста */
     margin: 0;
-    padding: 20px;
+    padding: 0; /* Убираем padding для body */
     color: #000; /* Черный текст для удобочитаемости */
+}
+
+/* Контейнер для страницы */
+.d-flex {
+    display: flex; /* Flexbox для выравнивания меню и содержимого */
+}
+
+/* Стили для бокового меню */
+.sidebar {
+    background-color: #f0f0f0; /* Цвет фона для бокового меню */
+    padding: 20px; /* Отступы внутри бокового меню */
+    border-right: 1px solid #ddd; /* Граница справа для разделения */
+}
+
+/* Основные стили для содержимого */
+.container {
+    flex-grow: 1; /* Заставляем основное содержимое занимать оставшееся пространство */
+    padding: 20px; /* Отступы для содержимого */
 }
 
 /* Заголовки */
@@ -30,17 +48,16 @@ h1, h2 {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 20px 0; /* Отступ сверху и снизу */
 }
 
 th, td {
-    border: 1px solid #ddd;
-    padding: 12px; /* Увеличенные отступы */
+    border: 1px solid #ddd; /* Легкая граница для ячеек */
+    padding: 12px; /* Увеличенные отступы внутри ячеек */
 }
 
 th {
     background-color: #e9ecef; /* Светло-серый фон для заголовков таблицы */
-    text-align: left;
 }
 
 /* Кнопки */
@@ -53,7 +70,6 @@ th {
     background-color: #004494; /* Более темный синий цвет при наведении */
 }
 
-
 .btn-danger {
     background-color: #dc3545; /* Красный фон для кнопок типа btn-danger */
     color: #ffffff; /* Белый текст на кнопках */
@@ -63,8 +79,7 @@ th {
     background-color: #c82333; /* Более темный красный при наведении */
 }
 
-
-/* Формы */
+/* Стиль для форм и спиннеров */
 .form-label {
     font-weight: bold; /* Жирный шрифт для меток формы */
 }
@@ -81,10 +96,47 @@ th {
     width: 30px;                            /* Ширина спиннера */
     height: 30px;                           /* Высота спиннера */
     animation: spin 1s linear infinite;      /* Анимация вращения */
-  }
+}
   
-  /* Анимация вращения */
-  @keyframes spin {
+/* Анимация вращения */
+@keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-  }
+}
+
+
+/* Подсветка строки при наведении и кликабельность */
+.clickable-row {
+    cursor: pointer; /* Указатель, чтобы показать, что строку можно кликнуть */
+}
+
+.clickable-row:hover {
+    background-color: #e0f7fa; /* Цвет фона при наведении (светлый оттенок голубого) */
+}
+
+/* Дропдаун для действий */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block; /* Показывать меню при наведении */
+}
+
+.dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f1f1; /* Цвет фона для элемента меню при наведении */
+}

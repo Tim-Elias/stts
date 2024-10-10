@@ -1,5 +1,4 @@
 from .s3_manager import S3Manager
-from app.logger import logger
 s3_manager = None
 bucket_name=None
 
@@ -7,7 +6,7 @@ def init_s3_manager(app):
     global s3_manager, bucket_name
     s3_manager = S3Manager(app)
     bucket_name=app.config['bucket_name']
-    logger.info(f'Инициализирован бакет: {bucket_name}')
+
 
 def get_s3_manager():
     global s3_manager

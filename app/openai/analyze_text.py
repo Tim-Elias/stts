@@ -1,8 +1,8 @@
 import openai
-from app.logger import logger  # Импортируем логгер
+from flask import current_app # Импортируем логгер
 
 def analyze_text(prompt, transcribed_text):
-    logger.info("Анализ текста с помощью OpenAI.")
+    current_app.logger.info("Анализ текста с помощью OpenAI.")
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "system", "content": prompt},
@@ -10,5 +10,5 @@ def analyze_text(prompt, transcribed_text):
     )
     analysis = response.choices[0].message.content
     tokens = response.usage.total_tokens
-    logger.info("Анализ текста завершен.")
+    current_app.logger.info("Анализ текста завершен.")
     return analysis, tokens

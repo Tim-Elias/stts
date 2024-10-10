@@ -21,7 +21,7 @@ $(document).ready(function() {
             }
         });
     }
-    
+
     function loadTranscriptions() {
         $.ajax({
             url: `/transcriptions?offset=${offset}&limit=${limit}`,
@@ -34,28 +34,23 @@ $(document).ready(function() {
                 $('#transcriptionsTable tbody').empty();
 
                 if (response.length === 0) {
-                    $('#transcriptionsTable tbody').append('<tr><td colspan="4">No transcriptions found.</td></tr>');
+                    $('#transcriptionsTable tbody').append('<tr><td colspan="3">Нет транскрипций.</td></tr>');
                 }
-                
+
                 response.forEach(function(transcription) {
-                    const row = `<tr>
-                                    <td>${transcription.transcription_id}</td> <!-- Используем transcription_id -->
+                    const row = `<tr class="clickable-row" data-transcription-id="${transcription.transcription_id}">
+                                    <td>${transcription.transcription_id}</td>
                                     <td>${transcription.text}</td>
                                     <td>${transcription.analysis}</td>
-                                    <td><button class="btn btn-primary viewTranscription" data-transcription-id="${transcription.transcription_id}">Просмотр</button></td>
                                 </tr>`;
                     $('#transcriptionsTable tbody').append(row);
                 });
-                
-                
 
-        
-                // Обработчик для кнопок просмотра
-                $('.viewTranscription').on('click', function() {
+                // Обработчик для клика по строкам
+                $('.clickable-row').on('click', function() {
                     const transcriptionId = $(this).data('transcription-id');
                     window.location.href = `/transcription/view/${transcriptionId}`; // Переход на страницу с деталями транскрипции
                 });
-                
             },
             error: function(xhr, status, error) {
                 $('#loadingIndicator').hide();
@@ -63,8 +58,6 @@ $(document).ready(function() {
             }
         });
     }
-
-    
 
     $('#backButton').on('click', function() {
         window.location.href = '/account';

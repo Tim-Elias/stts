@@ -2,6 +2,9 @@
 
 {% block content %}
 <h2>Manage Prompts</h2>
+<!-- Подключение внешних JavaScript файлов -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/static/js/manage_prompts.js"></script>
 
 <a href="/add_prompts" class="btn btn-primary mb-3">Add New Prompt</a>
 
@@ -10,6 +13,7 @@
         <tr>
             <th>Title</th>
             <th>Text</th>
+            <th>Use Automatically</th> <!-- Новый столбец для флага -->
             <th>Actions</th>
         </tr>
     </thead>
@@ -17,9 +21,6 @@
         <!-- Промпты будут загружены через JS -->
     </tbody>
 </table>
-
-<!-- Подключение внешних JavaScript файлов -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="/static/js/manage_prompts.js"></script>
+<button id="backButton" class="btn btn-secondary mt-4">Назад</button>
 
 {% endblock %}

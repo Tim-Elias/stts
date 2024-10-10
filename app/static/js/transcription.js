@@ -2,21 +2,24 @@ $(document).ready(function() {
     // Проверка наличия токена в localStorage
     const token = localStorage.getItem('jwt_token');
 
-    // Если токен отсутствует, перенаправляем на страницу входа
     if (!token) {
         window.location.href = '/';
     } else {
         // Проверка валидности токена с сервером
         $.ajax({
-            url: '/protected',  // Защищенный маршрут для проверки токена
+            url: '/protected',
             type: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token
             },
             success: function(response) {
                 console.log('Токен валидный, пользователь: ', response.logged_in_as);
-                loadPrompts(); // Загружаем промпты после проверки токена
-                loadAudioFiles(); // Загрузка аудиофайлов после проверки токена
+
+                // Загружаем промпты и аудиофайлы последовательно
+                loadPrompts().then(() => {
+                    checkAutomaticPrompt();  // Проверяем автоматический промпт только после загрузки промптов
+                });
+                loadAudioFiles(); // Загружаем аудиофайлы
             },
             error: function(xhr, status, error) {
                 console.error('Ошибка проверки токена:', error);
@@ -24,6 +27,61 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Функция загрузки всех промптов (возвращает Promise)
+    function loadPrompts() {
+        return new Promise((resolve, reject) => {
+            const token = localStorage.getItem('jwt_token');
+            $.ajax({
+                url: '/user_prompts',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(response) {
+                    console.log('Полученные данные:', response);
+                    const promptSelect = $('#prompt_name');
+                    promptSelect.empty();
+                    promptSelect.append('<option value="">-- Выберите промпт --</option>');
+
+                    response.prompt_data.forEach(prompt => {
+                        promptSelect.append(`<option value="${prompt.prompt_name}">${prompt.prompt_name}</option>`);
+                    });
+
+                    resolve();  // Успешное завершение загрузки промптов
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ошибка загрузки промптов:', status, error);
+                    reject();  // Ошибка загрузки
+                }
+            });
+        });
+    }
+
+    // Проверка и автоматический выбор промпта
+    function checkAutomaticPrompt() {
+        const token = localStorage.getItem('jwt_token');
+        $.ajax({
+            url: '/get_automatic_prompt',
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            success: function(response) {
+                console.log('Ответ сервера на запрос автоматического промпта:', response);
+
+                if (response.prompt_name) {
+                    $('#prompt_name').val(response.prompt_name);  // Автоматически выбираем промпт
+                    console.log(`Автоматический промпт '${response.prompt_name}' установлен.`);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('Ошибка получения автоматического промпта:', error);
+            }
+        });
+    }
+
+
 
     // Обработка формы при отправке
     // Обновление кода отправки аудиофайла
@@ -140,30 +198,9 @@ $(document).ready(function() {
     }
 
 
-    // Загрузка всех промптов
-    function loadPrompts() {
-        const token = localStorage.getItem('jwt_token');
-        $.ajax({
-            url: '/user_prompts',
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + token
-            },
-            success: function(response) {
-                console.log('Полученные данные:', response);  // Отладка
-                const promptSelect = $('#prompt_name');
-                promptSelect.empty();
-                promptSelect.append('<option value="">-- Выберите промпт --</option>');
+        // Проверка и автоматический выбор промпта
+    
 
-                response.prompt_data.forEach(prompt => {
-                    promptSelect.append(`<option value="${prompt.prompt_name}">${prompt.prompt_name}</option>`);
-                });
-            },
-            error: function(xhr, status, error) {
-                console.error('Ошибка загрузки промптов:', status, error);
-            }
-        });
-    }
 
     // Загрузка всех аудиофайлов
     function loadAudioFiles() {

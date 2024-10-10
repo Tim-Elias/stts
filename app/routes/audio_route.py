@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Response, jsonify
 import requests
 from urllib.parse import quote, unquote
 from werkzeug.utils import secure_filename
 import os
-from app.logger import logger
+
 
 audio_bp = Blueprint('audio', __name__)
 
@@ -30,11 +30,11 @@ def upload_audio():
     s3_manager = get_s3_manager()
     bucket_name = get_bucket_name()
     user = get_jwt_identity()
-    logger.info(f"Пользователь {user} пытается загрузить аудиофайл.")
+    current_app.logger.info(f"Пользователь {user} пытается загрузить аудиофайл.")
 
     file = request.files.get('file')
     if not file:
-        logger.error(f"Пользователь {user} не выбрал файл для загрузки.")
+        current_app.logger.error(f"Пользователь {user} не выбрал файл для загрузки.")
         return jsonify({'error': 'No file provided'}), 400
 
     # Получаем имя файла от пользователя и его расширение
@@ -51,24 +51,24 @@ def upload_audio():
     file_size = len(file.read())  # Читаем содержимое файла и получаем его размер
     file.seek(0)  # Сбрасываем указатель на начало файла после получения размера
 
-    logger.info(f"Файл для загрузки: {full_file_name}")
+    current_app.logger.info(f"Файл для загрузки: {full_file_name}")
 
     try:
         # Сохраняем временный файл на сервере
         file.save(full_file_name)
-        logger.info(f'Попытка загрузить аудио в бакет: {bucket_name}')
+        current_app.logger.info(f'Попытка загрузить аудио в бакет: {bucket_name}')
 
         # Загрузка файла в S3
         s3_manager.upload_file(full_file_name, bucket_name, s3_key)  # Используем s3_key с нижними подчеркиваниями
         db.add_audio_file(user, file_name_input, file_extension, file_size, bucket_name, s3_key)  # Сохраняем данные в БД
-        logger.info(f"Файл {full_file_name} успешно загружен в S3.")
+        current_app.logger.info(f"Файл {full_file_name} успешно загружен в S3.")
 
         # Удаляем временный файл после загрузки
         os.remove(full_file_name)
 
         return jsonify({'message': 'File uploaded successfully'}), 200
     except Exception as e:
-        logger.error(f"Ошибка при загрузке файла: {e}")
+        current_app.logger.error(f"Ошибка при загрузке файла: {e}")
         return jsonify({'error': 'File upload failed'}), 500
 
 
@@ -84,7 +84,7 @@ def get_files():
     
     db = AudioFileManager()
     user = get_jwt_identity()
-    logger.info(f"Пользователь {user} запрашивает список файлов.")
+    current_app.logger.info(f"Пользователь {user} запрашивает список файлов.")
 
     page = int(request.args.get('page', 1))
     per_page = 10
@@ -107,10 +107,10 @@ def get_files():
             for f in files_paginated
         ]
 
-        logger.info(f"Отправлен список файлов для страницы {page}.")
+        current_app.logger.info(f"Отправлен список файлов для страницы {page}.")
         return jsonify({'files': file_data, 'total_pages': total_pages}), 200
     except Exception as e:
-        logger.error(f"Ошибка при получении списка файлов: {e}")
+        current_app.logger.error(f"Ошибка при получении списка файлов: {e}")
         return jsonify({'error': 'Failed to retrieve files'}), 500
 
 
@@ -141,10 +141,10 @@ def delete_file():
         s3_manager.delete_file(bucket_name, file_record.s3_key)
         audio_id=file_record.audio_id
         db.delete_audio_file(audio_id)  # Метод для удаления записи из базы
-        logger.info(f"Файл {file_name} успешно удален.")
+        current_app.logger.info(f"Файл {file_name} успешно удален.")
         return jsonify({'message': 'File deleted successfully'}), 200
     except Exception as e:
-        logger.error(f"Ошибка при удалении файла: {e}")
+        current_app.logger.error(f"Ошибка при удалении файла: {e}")
         return jsonify({'error': 'File deletion failed'}), 500
 
 
@@ -157,10 +157,10 @@ def download_file_bytes():
     user = get_jwt_identity()
     file_name = request.args.get('file_name')
 
-    logger.info(f"Получен запрос на скачивание файла: {file_name} для пользователя: {user}")
+    current_app.logger.info(f"Получен запрос на скачивание файла: {file_name} для пользователя: {user}")
 
     if not file_name:
-        logger.warning("Имя файла не указано.")
+        current_app.logger.warning("Имя файла не указано.")
         return jsonify({'error': 'No file name provided'}), 400
 
     s3_manager = get_s3_manager()
@@ -169,19 +169,19 @@ def download_file_bytes():
     # Проверяем, что файл принадлежит текущему пользователю
     file_record = db.get_audio_file_by_name(user, file_name)
     if not file_record:
-        logger.warning(f"Файл '{file_name}' не найден или доступ запрещен для пользователя '{user}'.")
+        current_app.logger.warning(f"Файл '{file_name}' не найден или доступ запрещен для пользователя '{user}'.")
         return jsonify({'error': 'File not found or access denied'}), 404
 
     try:
         # Получаем файл из S3
         audio_bytes = s3_manager.get_file(bucket_name, file_record.s3_key)
         if audio_bytes is None:
-            logger.error(f"Не удалось получить содержимое файла '{file_name}' из S3.")
+            current_app.logger.error(f"Не удалось получить содержимое файла '{file_name}' из S3.")
             return jsonify({'error': 'Could not retrieve audio file'}), 500
         
         return Response(audio_bytes, mimetype='audio/mpeg')  # Укажите корректный тип контента
     except Exception as e:
-        logger.error(f"Ошибка при получении аудиофайла '{file_name}' из S3: {str(e)}")
+        current_app.logger.error(f"Ошибка при получении аудиофайла '{file_name}' из S3: {str(e)}")
         return jsonify({'error': f'Could not retrieve audio file: {str(e)}'}), 500
 
 
@@ -225,7 +225,7 @@ def proxy_download():
     file_name = request.args.get('file_name')
     # Декодирование имени файла
     file_name = unquote(file_name)
-    logger.info(f"Получено имя файла после декодирования: {file_name}")
+    current_app.logger.info(f"Получено имя файла после декодирования: {file_name}")
     if not file_name:
         return jsonify({'error': 'No file name provided'}), 400
 

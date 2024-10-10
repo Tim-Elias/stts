@@ -55,6 +55,8 @@ $(document).ready(function() {
             success: function() {
                 $('#promptForm')[0].reset(); // Сброс формы
                 alert('Промпт добавлен успешно!');
+                
+
             },
             error: function(xhr, status, error) {
                 console.error('Ошибка при добавлении промпта:', status, error);

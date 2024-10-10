@@ -1,5 +1,14 @@
 $(document).ready(function() {
-    
+    if (localStorage.getItem('jwt_token')) {
+        // Показываем боковое меню
+        $('#sidebar').show();
+        // Если токен есть, показываем кнопку выхода
+        $('#logoutButton').show();
+    } else {
+        // Скрываем панели
+        $('#logoutButton').hide();
+        $('#sidebar').hide();
+    }
 
     // Обработчик для формы входа
     $('#loginForm').on('submit', function(event) {
@@ -35,11 +44,22 @@ $(document).ready(function() {
         window.location.href = '/auth/google';
     });
 
+    // Обработчик для кнопки "Выход"
+    $('#logoutButton').on('click', function() {
+        // Удаление токена из localStorage
+        localStorage.removeItem('jwt_token');
+        // Перенаправление на главную страницу
+        window.location.href = '/';
+    });
+
     // Обработчик для кнопки "Register"
     $('#registerButton').on('click', function() {
         // Редиректим пользователя на страницу регистрации
         window.location.href = '/register';
     });
+
+
+
 
     // Обработчик для формы регистрации
     $('#registerForm').on('submit', function(event) {
