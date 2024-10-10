@@ -140,3 +140,15 @@ th {
 .dropdown-item:hover {
     background-color: #f1f1f1; /* Цвет фона для элемента меню при наведении */
 }
+
+
+/* Устанавливаем основные стили */
+#main-content {
+    flex-grow: 1;
+    margin-left: 20px;
+}
+
+.sidebar-hidden #main-content {
+    margin-left: 0;
+    width: 100%;
+}

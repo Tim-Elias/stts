@@ -24,9 +24,8 @@
         </div>
     </nav>
 
-    <div class="d-flex" style="padding: 20px;">  <!-- Flexbox для выравнивания меню и содержимого -->
-        <div class="sidebar", id="sidebar" style="width: 200px;">  <!-- Ширина бокового меню -->
-            <!-- Здесь можно вставить элементы меню -->
+    <div class="d-flex" id="content-wrapper" style="padding: 20px;">  <!-- Flexbox для выравнивания меню и содержимого -->
+        <div class="sidebar" id="sidebar" style="width: 200px; display: none;">  <!-- Боковое меню скрыто по умолчанию -->
             <ul class="list-group">
                 <li class="list-group-item"><a href="/manage_prompts">Управление промптами</a></li>
                 <li class="list-group-item"><a href="/manage_audio">Загрузить аудиозаписи</a></li>
@@ -37,7 +36,7 @@
             </ul>
         </div>
 
-        <div class="container" style="margin-left: 20px;">  <!-- Основное содержимое -->
+        <div class="container" id="main-content">  <!-- Основное содержимое -->
             {% block content %}{% endblock %}
         </div>
     </div>

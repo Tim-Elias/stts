@@ -1,13 +1,19 @@
 $(document).ready(function() {
+    // Проверка, есть ли боковое меню и JWT токен
+    const hasSidebar = $('#sidebar').length > 0;
+
     if (localStorage.getItem('jwt_token')) {
-        // Показываем боковое меню
-        $('#sidebar').show();
-        // Если токен есть, показываем кнопку выхода
-        $('#logoutButton').show();
+         $('#logoutButton').show();
+        if (hasSidebar) {
+            $('#sidebar').show();  // Показываем боковое меню
+        } else {
+            $('#sidebar').hide();  // Если бокового меню нет, скрываем
+            $('#content-wrapper').addClass('sidebar-hidden');  // Добавляем класс для центрирования контента
+        }
     } else {
-        // Скрываем панели
-        $('#logoutButton').hide();
-        $('#sidebar').hide();
+        $('#logoutButton').hide();  // Скрываем кнопку выхода, если нет токена
+        $('#sidebar').hide();  // Скрываем боковое меню
+        $('#content-wrapper').addClass('sidebar-hidden');  // Центрируем контент
     }
 
     // Обработчик для формы входа
