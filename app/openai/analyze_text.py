@@ -1,8 +1,12 @@
 import openai
 from flask import current_app # Импортируем логгер
+import logging
+# Получаем логгер по его имени
+logger = logging.getLogger('chatbot')
+
 
 def analyze_text(prompt, transcribed_text):
-    current_app.logger.info("Анализ текста с помощью OpenAI.")
+    logger.info("Анализ текста с помощью OpenAI.", extra={'user_id': 'openai'})
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "system", "content": prompt},
@@ -10,5 +14,5 @@ def analyze_text(prompt, transcribed_text):
     )
     analysis = response.choices[0].message.content
     tokens = response.usage.total_tokens
-    current_app.logger.info("Анализ текста завершен.")
+    logger.info("Анализ текста завершен.", extra={'user_id': 'openai'})
     return analysis, tokens

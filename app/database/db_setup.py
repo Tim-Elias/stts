@@ -7,6 +7,7 @@ from app.models.transcription import Transcription
 from app.models.user import User
 from app.models.prompt import Prompt
 from app.models.audio import AudioFile
+from app.models.logs import Logs
 
 def init_db(app):
     DATABASE_URL = app.config['SQLALCHEMY_DATABASE_URI']

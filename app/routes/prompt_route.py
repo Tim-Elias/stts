@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
+import logging
+# Получаем логгер по его имени
+logger = logging.getLogger('chatbot')
  # Импортируем логгер
-
 prompt_bp = Blueprint('prompt', __name__)
 
 # Отображение страницы управления промптами
@@ -17,9 +18,9 @@ def manage_prompts():
 def get_prompts():
     from app.database.managers.prompt_manager import PromptManager
     prompt_manager = PromptManager()
-    user = get_jwt_identity()
-    current_app.logger.info(f"Загрузка страницы управления промптами для пользователя: {user}")
-    prompts = prompt_manager.get_prompts_by_user(user)
+    current_user = get_jwt_identity()
+    logger.info(f"Загрузка страницы управления промптами для пользователя: {current_user}", extra={'user_id': current_user})
+    prompts = prompt_manager.get_prompts_by_user(current_user)
 
     prompt_data = []
 
@@ -31,7 +32,7 @@ def get_prompts():
             "use_automatic": s[3]
         }
 
-        current_app.logger.info(f"Загрузка страницы управления промптами для пользователя: {prompt_info}")
+        logger.info(f"Загрузка страницы управления промптами для пользователя: {prompt_info}", extra={'user_id': current_user})
         prompt_data.append(prompt_info)
 
     return jsonify(prompt_data=prompt_data), 200
@@ -42,15 +43,15 @@ def get_prompts():
 def add_prompt():
     from app.database.managers.prompt_manager import PromptManager
     prompt_manager = PromptManager()
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
     prompt_name = request.form.get('prompt_name')
     text = request.form.get('text')
     try:
-        current_app.logger.info(f"Добавление нового промпта для пользователя {user}: Название: {prompt_name}")
-        prompt_manager.add_prompt(user, prompt_name, text)
+        logger.info(f"Добавление нового промпта для пользователя {current_user}: Название: {prompt_name}", extra={'user_id': current_user})
+        prompt_manager.add_prompt(current_user, prompt_name, text)
         flash('Prompt added successfully', 'success')
     except Exception as e:
-        current_app.logger.error(f"Ошибка при добавлении промпта: {e}")
+        logger.error(f"Ошибка при добавлении промпта: {e}", extra={'user_id': current_user})
         flash('An error occurred while adding the prompt', 'danger')
     return jsonify({"message": "Prompt added successfully"}), 200 #redirect(url_for('prompt.manage_prompts'))
 
@@ -65,14 +66,14 @@ def add_prompt():
 def delete_prompt(prompt_id):
     from app.database.managers.prompt_manager import PromptManager
     prompt_manager = PromptManager()
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
     try:
-        current_app.logger.info(f"Удаление промпта {prompt_id} для пользователя {user}")
+        logger.info(f"Удаление промпта {prompt_id} для пользователя {current_user}", extra={'user_id': current_user})
         prompt_manager.delete_prompt(prompt_id)
-        current_app.logger.info(f"Промпт {prompt_id} удален для пользователя {user}")
+        logger.info(f"Промпт {prompt_id} удален для пользователя {current_user}", extra={'user_id': current_user})
         return jsonify(success=True, message='Prompt deleted successfully'), 200
     except Exception as e:
-        current_app.logger.error(f"Ошибка при удалении промпта: {e}")
+        logger.error(f"Ошибка при удалении промпта: {e}", extra={'user_id': current_user})
         return jsonify(success=False, message='An error occurred while deleting the prompt'), 500
 
 
@@ -90,7 +91,7 @@ def edit_prompt_page(prompt_id):
     prompt = prompt_manager.get_prompt_by_prompt_id(prompt_id)
     
     if prompt:
-        return render_template('edit_prompt.html', prompt_id=prompt_id, prompt_name=prompt.prompt_name, prompt_text=prompt.text)
+        return render_template('edit_prompt.html', prompt_id=prompt_id, prompt_name=prompt['prompt_name'], prompt_text=prompt['text'])
     else:
         flash('Prompt not found', 'danger')
         return redirect(url_for('prompt.manage_prompts'))
@@ -103,25 +104,25 @@ def edit_prompt_page(prompt_id):
 def edit_prompt(prompt_id):
     from app.database.managers.prompt_manager import PromptManager
     prompt_manager = PromptManager()
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
 
     data = request.get_json()
     new_text = data.get('text')
     new_prompt_name = data.get('prompt_name')  # Получаем новое имя промпта
 
     try:
-        current_app.logger.info(f"Изменение промпта {prompt_id} для пользователя {user}")
+        logger.info(f"Изменение промпта {prompt_id} для пользователя {current_user}", extra={'user_id': current_user})
         success = prompt_manager.edit_prompt(prompt_id, new_text, new_prompt_name)  # Передаем новое имя
 
         if success:
-            current_app.logger.info(f"Промпт {prompt_id} изменен для пользователя {user}")
+            logger.info(f"Промпт {prompt_id} изменен для пользователя {current_user}", extra={'user_id': current_user})
             return jsonify(success=True, message='Prompt updated successfully'), 200
         else:
-            current_app.logger.error(f"Промпт {prompt_id} не найден или произошла ошибка")
+            logger.error(f"Промпт {prompt_id} не найден или произошла ошибка", extra={'user_id': current_user})
             return jsonify(success=False, message='Prompt ID not found'), 400
 
     except Exception as e:
-        current_app.logger.error(f"Ошибка при изменении промпта: {e}")
+        logger.error(f"Ошибка при изменении промпта: {e}")
         return jsonify(success=False, message=str(e)), 500
 
 
@@ -130,24 +131,37 @@ def edit_prompt(prompt_id):
 def set_automatic(prompt_id):
     from app.database.managers.prompt_manager import PromptManager
     prompt_manager = PromptManager()
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
 
     data = request.get_json()
     use_automatic = data.get('use_automatic')
-    current_app.logger.info(f"Запрос на изменение флага 'use_automatic' для промпта {prompt_id} пользователем {user}: {use_automatic}")
+    logger.info(f"Запрос на изменение флага 'use_automatic' для промпта {prompt_id} пользователем {current_user}: {use_automatic}", extra={'user_id': current_user})
 
     try:
         # Сначала сбрасываем флаг для всех остальных промптов, если устанавливаем новый флаг
         if use_automatic:
-            current_app.logger.info(f"Сброс флага 'use_automatic' для всех промптов пользователя {user}.")
-            prompt_manager.reset_automatic_flag(user)  # Функция для сброса флага
+            logger.info(f"Сброс флага 'use_automatic' для всех промптов пользователя {current_user}.", extra={'user_id': current_user})
+            prompt_manager.reset_automatic_flag(current_user)  # Функция для сброса флага
         # Обновляем выбранный промпт
         prompt_manager.set_automatic_flag(prompt_id, use_automatic)
 
-        current_app.logger.info(f"Флаг 'use_automatic' для промпта {prompt_id} успешно обновлён на {use_automatic}.")
+        logger.info(f"Флаг 'use_automatic' для промпта {prompt_id} успешно обновлён на {use_automatic}.", extra={'user_id': current_user})
         return jsonify(success=True, message='Automatic flag updated successfully'), 200
     except Exception as e:
-        current_app.logger.error(f"Ошибка при изменении флага: {e}")
+        logger.error(f"Ошибка при изменении флага: {e}", extra={'user_id': current_user})
         return jsonify(success=False, message=str(e)), 500
 
 
+# Страница просмотра промпта
+@prompt_bp.route('/prompt/<prompt_id>/view', methods=['GET'])
+def view_prompt(prompt_id):
+    from app.database.managers.prompt_manager import PromptManager
+    prompt_manager = PromptManager()
+    
+    prompt = prompt_manager.get_prompt_by_prompt_id(prompt_id)
+    
+    if prompt:
+        return render_template('view_prompt.html', prompt_id=prompt_id, prompt_name=prompt['prompt_name'], prompt_text=prompt['text'])
+    else:
+        flash('Prompt not found', 'danger')
+        return redirect(url_for('prompt.manage_prompts'))

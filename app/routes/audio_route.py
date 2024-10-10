@@ -5,7 +5,9 @@ import requests
 from urllib.parse import quote, unquote
 from werkzeug.utils import secure_filename
 import os
-
+import logging
+# Получаем логгер по его имени
+logger = logging.getLogger('chatbot')
 
 audio_bp = Blueprint('audio', __name__)
 
@@ -29,12 +31,12 @@ def upload_audio():
     # Инициализация S3 Manager
     s3_manager = get_s3_manager()
     bucket_name = get_bucket_name()
-    user = get_jwt_identity()
-    current_app.logger.info(f"Пользователь {user} пытается загрузить аудиофайл.")
+    current_user = get_jwt_identity()
+    logger.info(f"Пользователь {current_user} пытается загрузить аудиофайл.", extra={'user_id': current_user})
 
     file = request.files.get('file')
     if not file:
-        current_app.logger.error(f"Пользователь {user} не выбрал файл для загрузки.")
+        logger.error(f"Пользователь {current_user} не выбрал файл для загрузки.", extra={'user_id': current_user})
         return jsonify({'error': 'No file provided'}), 400
 
     # Получаем имя файла от пользователя и его расширение
@@ -51,24 +53,24 @@ def upload_audio():
     file_size = len(file.read())  # Читаем содержимое файла и получаем его размер
     file.seek(0)  # Сбрасываем указатель на начало файла после получения размера
 
-    current_app.logger.info(f"Файл для загрузки: {full_file_name}")
+    logger.info(f"Файл для загрузки: {full_file_name}", extra={'user_id': current_user})
 
     try:
         # Сохраняем временный файл на сервере
         file.save(full_file_name)
-        current_app.logger.info(f'Попытка загрузить аудио в бакет: {bucket_name}')
+        logger.info(f'Попытка загрузить аудио в бакет: {bucket_name}', extra={'user_id': current_user})
 
         # Загрузка файла в S3
         s3_manager.upload_file(full_file_name, bucket_name, s3_key)  # Используем s3_key с нижними подчеркиваниями
-        db.add_audio_file(user, file_name_input, file_extension, file_size, bucket_name, s3_key)  # Сохраняем данные в БД
-        current_app.logger.info(f"Файл {full_file_name} успешно загружен в S3.")
+        db.add_audio_file(current_user, file_name_input, file_extension, file_size, bucket_name, s3_key)  # Сохраняем данные в БД
+        logger.info(f"Файл {full_file_name} успешно загружен в S3.", extra={'user_id': current_user})
 
         # Удаляем временный файл после загрузки
         os.remove(full_file_name)
 
         return jsonify({'message': 'File uploaded successfully'}), 200
     except Exception as e:
-        current_app.logger.error(f"Ошибка при загрузке файла: {e}")
+        logger.error(f"Ошибка при загрузке файла: {e}", extra={'user_id': current_user})
         return jsonify({'error': 'File upload failed'}), 500
 
 
@@ -83,15 +85,15 @@ def get_files():
     from app.database.managers.audio_manager import AudioFileManager
     
     db = AudioFileManager()
-    user = get_jwt_identity()
-    current_app.logger.info(f"Пользователь {user} запрашивает список файлов.")
+    current_user = get_jwt_identity()
+    logger.info(f"Пользователь {current_user} запрашивает список файлов.", extra={'user_id': current_user})
 
     page = int(request.args.get('page', 1))
     per_page = 10
 
     try:
         # Получаем файлы для текущего пользователя
-        files = db.get_audio_files_by_user(user)
+        files = db.get_audio_files_by_user(current_user)
         total_files = len(files)
         total_pages = (total_files + per_page - 1) // per_page
         
@@ -107,10 +109,10 @@ def get_files():
             for f in files_paginated
         ]
 
-        current_app.logger.info(f"Отправлен список файлов для страницы {page}.")
+        logger.info(f"Отправлен список файлов для страницы {page}.", extra={'user_id': current_user})
         return jsonify({'files': file_data, 'total_pages': total_pages}), 200
     except Exception as e:
-        current_app.logger.error(f"Ошибка при получении списка файлов: {e}")
+        logger.error(f"Ошибка при получении списка файлов: {e}", extra={'user_id': current_user})
         return jsonify({'error': 'Failed to retrieve files'}), 500
 
 
@@ -122,7 +124,7 @@ def delete_file():
     from app.database.managers.audio_manager import AudioFileManager
     db = AudioFileManager()
     from app.s3 import get_s3_manager, get_bucket_name
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
     file_name = request.json.get('file_name')
 
     if not file_name:
@@ -132,7 +134,7 @@ def delete_file():
     bucket_name = get_bucket_name()
 
     # Проверяем, что файл принадлежит текущему пользователю
-    file_record = db.get_audio_file_by_name(user, file_name)
+    file_record = db.get_audio_file_by_name(current_user, file_name)
     if not file_record:
         return jsonify({'error': 'File not found or access denied'}), 404
 
@@ -141,10 +143,10 @@ def delete_file():
         s3_manager.delete_file(bucket_name, file_record.s3_key)
         audio_id=file_record.audio_id
         db.delete_audio_file(audio_id)  # Метод для удаления записи из базы
-        current_app.logger.info(f"Файл {file_name} успешно удален.")
+        logger.info(f"Файл {file_name} успешно удален.", extra={'user_id': current_user})
         return jsonify({'message': 'File deleted successfully'}), 200
     except Exception as e:
-        current_app.logger.error(f"Ошибка при удалении файла: {e}")
+        logger.error(f"Ошибка при удалении файла: {e}", extra={'user_id': current_user})
         return jsonify({'error': 'File deletion failed'}), 500
 
 
@@ -154,34 +156,34 @@ def download_file_bytes():
     from app.database.managers.audio_manager import AudioFileManager
     db = AudioFileManager()
     from app.s3 import get_s3_manager, get_bucket_name
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
     file_name = request.args.get('file_name')
 
-    current_app.logger.info(f"Получен запрос на скачивание файла: {file_name} для пользователя: {user}")
+    logger.info(f"Получен запрос на скачивание файла: {file_name} для пользователя: {current_user}", extra={'user_id': current_user})
 
     if not file_name:
-        current_app.logger.warning("Имя файла не указано.")
+        logger.warning("Имя файла не указано.", extra={'user_id': current_user})
         return jsonify({'error': 'No file name provided'}), 400
 
     s3_manager = get_s3_manager()
     bucket_name = get_bucket_name()
 
     # Проверяем, что файл принадлежит текущему пользователю
-    file_record = db.get_audio_file_by_name(user, file_name)
+    file_record = db.get_audio_file_by_name(current_user, file_name)
     if not file_record:
-        current_app.logger.warning(f"Файл '{file_name}' не найден или доступ запрещен для пользователя '{user}'.")
+        logger.warning(f"Файл '{file_name}' не найден или доступ запрещен для пользователя '{current_user}'.", extra={'user_id': current_user})
         return jsonify({'error': 'File not found or access denied'}), 404
 
     try:
         # Получаем файл из S3
         audio_bytes = s3_manager.get_file(bucket_name, file_record.s3_key)
         if audio_bytes is None:
-            current_app.logger.error(f"Не удалось получить содержимое файла '{file_name}' из S3.")
+            logger.error(f"Не удалось получить содержимое файла '{file_name}' из S3.", extra={'user_id': current_user})
             return jsonify({'error': 'Could not retrieve audio file'}), 500
         
         return Response(audio_bytes, mimetype='audio/mpeg')  # Укажите корректный тип контента
     except Exception as e:
-        current_app.logger.error(f"Ошибка при получении аудиофайла '{file_name}' из S3: {str(e)}")
+        logger.error(f"Ошибка при получении аудиофайла '{file_name}' из S3: {str(e)}", extra={'user_id': current_user})
         return jsonify({'error': f'Could not retrieve audio file: {str(e)}'}), 500
 
 
@@ -191,7 +193,7 @@ def download_file():
     from app.database.managers.audio_manager import AudioFileManager
     db = AudioFileManager()
     from app.s3 import get_s3_manager, get_bucket_name
-    user = get_jwt_identity()
+    current_user = get_jwt_identity()
     file_name = request.args.get('file_name')
 
     if not file_name:
@@ -202,7 +204,7 @@ def download_file():
 
     # Проверяем, что файл принадлежит текущему пользователю
     # Предполагаем, что `db.get_audio_file_by_user` возвращает объект файла или None
-    file_record = db.get_audio_file_by_name(user, file_name)
+    file_record = db.get_audio_file_by_name(current_user, file_name)
     if not file_record:
         return jsonify({'error': 'File not found or access denied'}), 404
 
@@ -215,41 +217,3 @@ def download_file():
         return jsonify({'error': 'Could not generate download URL'}), 500
 
 
-@audio_bp.route('/proxy_download', methods=['GET'])
-@jwt_required()
-def proxy_download():
-    from app.database.managers.audio_manager import AudioFileManager
-    db = AudioFileManager()
-    from app.s3 import get_s3_manager, get_bucket_name
-    user = get_jwt_identity()
-    file_name = request.args.get('file_name')
-    # Декодирование имени файла
-    file_name = unquote(file_name)
-    current_app.logger.info(f"Получено имя файла после декодирования: {file_name}")
-    if not file_name:
-        return jsonify({'error': 'No file name provided'}), 400
-
-    file_record = db.get_audio_file_by_name(user, file_name)
-    if not file_record:
-        return jsonify({'error': 'File not found or access denied'}), 404
-
-    s3_manager = get_s3_manager()
-    bucket_name = get_bucket_name()
-
-    url = s3_manager.generate_presigned_url(bucket_name, file_record.s3_key)
-
-    if not url:
-        return jsonify({'error': 'Could not generate download URL'}), 500
-
-    s3_response = requests.get(url, stream=True)
-
-    # Кодируем имя файла для корректной передачи в заголовке
-    safe_file_name = quote(file_name)
-
-    return Response(
-        s3_response.raw,
-        headers={
-            'Content-Disposition': f'attachment; filename*=UTF-8\'\'{safe_file_name}',
-            'Content-Type': s3_response.headers.get('Content-Type', 'application/octet-stream')
-        }
-    )

@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     console.log('Управление промптами подключилось');
     const token = localStorage.getItem('jwt_token');
 
@@ -14,11 +14,11 @@ $(document).ready(function() {
             headers: {
                 'Authorization': 'Bearer ' + token
             },
-            success: function(response) {
+            success: function (response) {
                 loadPrompts();
                 console.log('Токен валидный, пользователь: ', response.logged_in_as);
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Ошибка проверки токена:', error);
                 window.location.href = '/';
             }
@@ -34,7 +34,7 @@ $(document).ready(function() {
             headers: {
                 'Authorization': 'Bearer ' + token
             },
-            success: function(response) {
+            success: function (response) {
                 const promptList = $('#promptList');
                 promptList.empty(); // Очищаем перед обновлением списка
                 console.log('Промпты успешно загружены:', response.prompt_data);
@@ -51,8 +51,9 @@ $(document).ready(function() {
                                 <div class="dropdown">
                                     <span class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">&#x22EE;</span>
                                     <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="/prompt/${prompt.prompt_id}/view">View</a>
                                         <a class="dropdown-item" href="/prompt/${prompt.prompt_id}">Edit</a>
-                                        <a class="dropdown-item" href="#" onclick="deletePrompt(${prompt.prompt_id})">Delete</a>
+                                        <a class="dropdown-item delete-prompt" href="#" data-id="${prompt.prompt_id}">Delete</a>
                                     </div>
                                 </div>
                             </td>
@@ -61,7 +62,8 @@ $(document).ready(function() {
                 });
 
                 // Обработчик для изменения флага
-                $('.use-automatic').change(function() {
+                $('.use-automatic').change(function (event) {
+                    event.stopPropagation(); // Остановить всплытие события
                     const promptId = $(this).data('id');
                     const isChecked = $(this).is(':checked');
                     console.log(`Изменение флага "Использовать автоматически" для промпта ID: ${promptId} на ${isChecked}`);
@@ -81,29 +83,45 @@ $(document).ready(function() {
                         headers: {
                             'Authorization': 'Bearer ' + token
                         },
-                        success: function(response) {
+                        success: function (response) {
                             console.log('Флаг успешно обновлён:', response);
                         },
-                        error: function(xhr, status, error) {
+                        error: function (xhr, status, error) {
                             console.error('Ошибка при обновлении флага:', status, error);
                         }
                     });
                 });
 
                 // Обработчик для клика по строкам
-                $('.clickable-row').on('click', function() {
-                    const promptId = $(this).data('id');
-                    window.location.href = `/prompt/${promptId}`; // Переход на страницу редактирования
+                $('.clickable-row').on('click', function (event) {
+                    // Проверяем, был ли клик на элементе внутри строки, который не должен вызывать переход
+                    const target = $(event.target);
+                    if (!target.closest('.delete-prompt').length && !target.closest('.use-automatic').length) {
+                        const promptId = $(this).data('id');
+                        window.location.href = `/prompt/${promptId}/view`; // Переход на страницу просмотра
+                    }
                 });
+
+                // Обработчик для удаления промптов
+                attachDeleteHandler(); // Присоединяем обработчик удаления
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Ошибка загрузки промптов:', status, error);
             }
         });
     }
 
+    // Функция для присоединения обработчика для удаления промптов
+    function attachDeleteHandler() {
+        $('.delete-prompt').off('click').on('click', function (event) {
+            event.preventDefault(); // Предотвращаем переход по ссылке
+            const promptId = $(this).data('id');
+            deletePrompt(promptId);
+        });
+    }
+
     // Функция для удаления промпта
-    window.deletePrompt = function(prompt_id) {
+    function deletePrompt(prompt_id) {
         if (confirm('Are you sure you want to delete this prompt?')) {
             console.log(`Удаление промпта ID: ${prompt_id}`);
             $.ajax({
@@ -112,19 +130,15 @@ $(document).ready(function() {
                 headers: {
                     'Authorization': 'Bearer ' + token
                 },
-                success: function() {
+                success: function () {
                     loadPrompts();  // Перезагрузить список после удаления
                     console.log(`Промпт ID: ${prompt_id} успешно удалён.`);
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Ошибка удаления промпта:', status, error);
+                    alert('Ошибка удаления промпта. Пожалуйста, попробуйте снова.');
                 }
             });
         }
-    };
-
-    $('#backButton').on('click', function() {
-        console.log('Возврат на страницу учётной записи...');
-        window.location.href = '/account';
-    });
+    }
 });

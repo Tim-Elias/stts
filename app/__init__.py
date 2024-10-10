@@ -8,7 +8,7 @@ from app.s3 import init_s3_manager
 from app.database.migrations.admin import admin
 from app.routes import register_routes
 from app.openai import init_openai
-from app.logger import init_logger  # Импортируем логгер
+from app.logger import setup_logger   # Импортируем логгер
 
 load_dotenv()
 
@@ -18,17 +18,24 @@ def create_app():
     app = Flask(__name__)
     
 
-    init_logger(app)
-    app.logger.info("Создание экземпляра приложения Flask.")
-    app.logger.info("Инициализация логгера.")
-
     # Настройки приложения
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
         app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-        app.logger.info("Настройки приложения загружены.")
+        #logger.info("Настройки приложения загружены.")
     except Exception as e:
-        app.logger.error(f"Ошибка при загрузке настроек приложения: {e}")
+        #logger.error(f"Ошибка при загрузке настроек приложения: {e}")
+        raise
+
+    # Инициализация базы данных
+    try:
+        engine, Session, Base = init_db(app)
+        set_db_globals(engine, Session, Base)
+        #admin('admin', 'admin', 'admin')
+        logger=setup_logger()
+        logger.info("База данных успешно инициализирована.", extra={'user_id': 'init'})
+    except Exception as e:
+        logger.error(f"Ошибка при инициализации базы данных: {e}", extra={'user_id': 'init'})
         raise
 
     # Настройка JWT
@@ -36,17 +43,17 @@ def create_app():
         app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Секретный ключ для JWT
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600  # Время истечения токена доступа
         jwt = JWTManager(app)
-        app.logger.info("JWT инициализирован.")
+        logger.info("JWT инициализирован.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при инициализации JWT: {e}")
+        logger.error(f"Ошибка при инициализации JWT: {e}", extra={'user_id': 'init'})
         raise
 
     # Настройка OpenAI
     try:
         app.config['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
-        app.logger.info("Настройки OpenAI загружены.")
+        logger.info("Настройки OpenAI загружены.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при загрузке настроек OpenAI: {e}")
+        logger.error(f"Ошибка при загрузке настроек OpenAI: {e}", extra={'user_id': 'init'})
         raise
     
     # Настройка хранилища s3
@@ -56,9 +63,9 @@ def create_app():
         app.config['aws_access_key_id']=os.getenv('AWS_ACCESS_KEY_ID')
         app.config['aws_secret_access_key']=os.getenv('AWS_SECRET_ACCESS_KEY')
         app.config['bucket_name']=os.getenv('BUCKET_NAME')
-        app.logger.info("Настройки s3 хранилища загружены.")
+        logger.info("Настройки s3 хранилища загружены.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при загрузке настроек s3 хранилища: {e}")
+        logger.error(f"Ошибка при загрузке настроек s3 хранилища: {e}", extra={'user_id': 'init'})
         raise
 
     login = os.getenv('LOGIN')
@@ -77,49 +84,41 @@ def create_app():
             userinfo_endpoint='https://www.googleapis.com/oauth2/v1/userinfo',
             client_kwargs={'scope': 'openid email profile'},
         )
-        app.logger.info("Google OAuth инициализирован.")
+        logger.info("Google OAuth инициализирован.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при регистрации Google OAuth: {e}")
+        logger.error(f"Ошибка при регистрации Google OAuth: {e}", extra={'user_id': 'init'})
         raise
 
-    # Инициализация базы данных
-    try:
-        engine, Session, Base = init_db(app)
-        set_db_globals(engine, Session, Base)
-        #admin('admin', 'admin', 'admin')
-        app.logger.info("База данных успешно инициализирована.")
-    except Exception as e:
-        app.logger.error(f"Ошибка при инициализации базы данных: {e}")
-        raise
+    
 
     # Инициализация OpenAI
     try:
         init_openai(app)
-        app.logger.info("OpenAI успешно инициализирован.")
+        logger.info("OpenAI успешно инициализирован.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при инициализации OpenAI: {e}")
+        logger.error(f"Ошибка при инициализации OpenAI: {e}", extra={'user_id': 'init'})
         raise
 
     # Инициализация s3
     try:
         init_s3_manager(app)
-        app.logger.info("s3 хранилище успешно инициализировано.")
+        logger.info("s3 хранилище успешно инициализировано.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при инициализации s3 хранилища: {e}")
+        logger.error(f"Ошибка при инициализации s3 хранилища: {e}", extra={'user_id': 'init'})
         raise
 
     # Регистрация маршрутов
     try:
         register_routes(app)
-        app.logger.info("Маршруты успешно зарегистрированы.")
+        logger.info("Маршруты успешно зарегистрированы.", extra={'user_id': 'init'})
     except Exception as e:
-        app.logger.error(f"Ошибка при регистрации маршрутов: {e}")
+        logger.error(f"Ошибка при регистрации маршрутов: {e}", extra={'user_id': 'init'})
         raise
 
     # Регистрация маршрутов Google Auth
     from app.routes import google_auth_bp  # Обновите путь к вашим модулям
     app.register_blueprint(google_auth_bp)
     google_auth_bp.oauth = google
-    app.logger.info("Маршрут Google Auth успешно зарегистрирован.")
+    app.logger.info("Маршрут Google Auth успешно зарегистрирован.", extra={'user_id': 'init'})
 
     return app

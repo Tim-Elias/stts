@@ -12,36 +12,82 @@ body {
     display: flex; /* Flexbox для выравнивания меню и содержимого */
 }
 
-/* Стили для бокового меню */
-.sidebar {
-    background-color: #f0f0f0; /* Цвет фона для бокового меню */
-    padding: 20px; /* Отступы внутри бокового меню */
-    border-right: 1px solid #ddd; /* Граница справа для разделения */
-}
-
-/* Основные стили для содержимого */
-.container {
-    flex-grow: 1; /* Заставляем основное содержимое занимать оставшееся пространство */
-    padding: 20px; /* Отступы для содержимого */
-}
-
-/* Заголовки */
 h1, h2 {
-    color: #000000; /* Корпоративный синий цвет */
-    margin-bottom: 20px; /* Отступ снизу */
+    color: #333; /* Немного более мягкий черный, чем чистый #000 */
+}
+
+/* Для выравнивания заголовков с сайдбаром */
+h1, h2 {
+    margin-top: 0;  /* Убираем верхний отступ */
+    padding-top: 10px; /* Задаем отступ для выравнивания относительно сайдбара */
+    margin-bottom: 20px; /* Отступ снизу для удобства чтения */
+}
+
+.container {
+    padding-top: 20px; /* Общий отступ сверху для всего содержимого */
 }
 
 /* Стили для навигационного меню */
 .navbar {
-    background-color: #0056b3; /* Темно-синий фон для навбара */
+    padding: 10px; /* Увеличиваем отступы для навбара */
+    position: relative; /* Устанавливаем относительное положение */
+    z-index: 10; /* Повышаем z-index, чтобы навбар был выше сайдбара */
 }
 
 .navbar-brand, .nav-link {
-    color: #0a0a0a; /* Белый цвет текста в навбаре */
+    color: #ffffff; /* Белый цвет текста в навбаре */
 }
 
 .nav-link:hover {
-    text-decoration: underline; /* Подчеркивание при наведении */
+    background-color: rgba(255, 255, 255, 0.2); /* Подсветка при наведении */
+}
+
+/* Стили для бокового меню */
+.sidebar {
+    background-color: #e9ecef; /* Светло-серый фон для улучшения контраста */
+    border-right: 2px solid #ccc;
+    width: 200px; /* Фиксированная ширина */
+    position: fixed; /* Зафиксируем боковую панель */
+    top: 0; /* Убираем жесткое значение, устанавливается через JS */
+    left: 0;
+    padding-bottom: 20px; /* Небольшой отступ снизу */
+    height: calc(100% - 56px); /* Можно оставить для других элементов */
+    overflow-y: auto; /* Прокрутка, если элементов слишком много */
+}
+
+
+/* Контент-область с учетом боковой панели */
+#main-content {
+    flex-grow: 1;
+    margin-left: 220px; /* Учитываем ширину боковой панели */
+    padding: 20px; /* Отступ для удобства чтения содержимого */
+}
+
+/* Список внутри сайдбара */
+.sidebar ul {
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar .list-group-item {
+    border: none; /* Убираем границы у элементов списка */
+    padding: 10px 15px; /* Увеличенные отступы */
+}
+
+/* Кнопки в сайдбаре */
+.sidebar .list-group-item-action {
+    color: #0056b3; /* Темно-синий цвет текста */
+    background-color: transparent; /* Прозрачный фон для элементов */
+}
+
+.sidebar .list-group-item-action:hover {
+    background-color: rgba(0, 86, 179, 0.1); /* Светлый фон при наведении */
+}
+
+/* Для мобильных экранов, когда сайдбар скрыт */
+.sidebar-hidden #main-content {
+    margin-left: 0;
+    width: 100%;
 }
 
 /* Таблицы */
@@ -50,6 +96,16 @@ table {
     border-collapse: collapse;
     margin: 20px 0; /* Отступ сверху и снизу */
 }
+
+
+tr:nth-child(even) {
+    background-color: transparent; /* Устанавливаем фон для четных строк */
+}
+
+tr:nth-child(odd) {
+    background-color: transparent; /* Устанавливаем фон для нечетных строк */
+}
+
 
 th, td {
     border: 1px solid #ddd; /* Легкая граница для ячеек */
@@ -97,22 +153,24 @@ th {
     height: 30px;                           /* Высота спиннера */
     animation: spin 1s linear infinite;      /* Анимация вращения */
 }
-  
+
 /* Анимация вращения */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-
 /* Подсветка строки при наведении и кликабельность */
 .clickable-row {
-    cursor: pointer; /* Указатель, чтобы показать, что строку можно кликнуть */
+    cursor: pointer; /* Изменяем курсор на указатель для строк */
+    position: relative; /* Установите относительное позиционирование */
+    z-index: 1; /* Увеличьте z-index, чтобы строка была выше */
 }
 
 .clickable-row:hover {
-    background-color: #e0f7fa; /* Цвет фона при наведении (светлый оттенок голубого) */
+    background-color: #5472e2b3; /* Цвет фона при наведении */
 }
+
 
 /* Дропдаун для действий */
 .dropdown {
@@ -139,16 +197,4 @@ th {
 
 .dropdown-item:hover {
     background-color: #f1f1f1; /* Цвет фона для элемента меню при наведении */
-}
-
-
-/* Устанавливаем основные стили */
-#main-content {
-    flex-grow: 1;
-    margin-left: 20px;
-}
-
-.sidebar-hidden #main-content {
-    margin-left: 0;
-    width: 100%;
 }

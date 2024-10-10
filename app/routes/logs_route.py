@@ -25,13 +25,15 @@ def logs_page():
     return render_template('logs.html')
 
 
-@logs_bp.route('/logs/data')
-@jwt_required() # Применяем ваш декоратор аутентификации
-def get_logs_data():
-    try:
-        with open('app.log', 'r') as log_file:
-            logs = log_file.read()
-        return jsonify({"logs": logs})
-    except Exception as e:
-        current_app.logger.error(f"Ошибка при чтении логов: {e}")
-        return jsonify({"error": "Error loading logs"}), 500
+@logs_bp.route('/api/logs', methods=['GET'])
+@jwt_required()
+def get_logs():
+    user_id = request.args.get('user_id')
+    date = request.args.get('date')
+    offset = int(request.args.get('offset', 0))
+    limit = int(request.args.get('limit', 10))
+    from app.database.managers.logs_manager import LogManager
+    log_manager = LogManager()
+    logs, total_count = log_manager.get_logs(user_id=user_id, date=date, offset=offset, limit=limit)
+
+    return jsonify({'total': total_count, 'logs': logs})  # Убедитесь, что возвращаете правильный формат

@@ -16,6 +16,18 @@ $(document).ready(function() {
         $('#content-wrapper').addClass('sidebar-hidden');  // Центрируем контент
     }
 
+    function adjustSidebar() {
+        const navbarHeight = $('.navbar').outerHeight();
+        $('.sidebar').css('top', navbarHeight + 'px'); // Устанавливаем верхнее положение сайдбара
+        $('#main-content').css('padding-top', navbarHeight + 'px'); // Увеличиваем верхний отступ для основного контента
+    }
+
+    adjustSidebar(); // Настраиваем сайдбар при загрузке страницы
+
+    $(window).resize(function() {
+        adjustSidebar(); // Перенастраиваем сайдбар при изменении размера окна
+    });
+    
     // Обработчик для формы входа
     $('#loginForm').on('submit', function(event) {
         event.preventDefault();

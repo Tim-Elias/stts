@@ -3,7 +3,10 @@ from flask import current_app
 from app.models.transcription import Transcription
 import uuid
 from app.database.db_globals import Session
- # Импортируем логгер
+import logging
+# Получаем логгер по его имени
+logger = logging.getLogger('chatbot')
+
 
 class TranscriptionManager:
     def __init__(self):
@@ -11,7 +14,7 @@ class TranscriptionManager:
 
     def add_transcription(self, user, audio_id, text, analysis, prompt, tokens):
         session = self.Session()
-        current_app.logger.info("Сохранение транскрипции в базу данных.")
+        logger.info("Сохранение транскрипции в базу данных.", extra={'user_id': 'TranscriptionManager'})
         transcription_id = uuid.uuid4()
         new_transcription = Transcription(transcription_id=transcription_id,
                                           user=user,
@@ -23,13 +26,13 @@ class TranscriptionManager:
         session.add(new_transcription)
         session.commit()
         session.close()
-        current_app.logger.info("Транскрипция успешно сохранена.")
+        logger.info("Транскрипция успешно сохранена.", extra={'user_id': 'TranscriptionManager'})
         return transcription_id
 
     def get_transcription_by_user(self, user, offset=0, limit=10):
         session = self.Session()
         try:
-            current_app.logger.info(f"Получение транскрипций для пользователя: {user} с ограничением {limit} и смещением {offset}.")
+            logger.info(f"Получение транскрипций для пользователя: {user} с ограничением {limit} и смещением {offset}.", extra={'user_id': 'TranscriptionManager'})
             transcriptions = session.query(Transcription).filter_by(user=user).limit(limit).offset(offset).all()
             result = [{
                 'transcription_id': t.transcription_id,  # Добавлено поле transcription_id
@@ -48,7 +51,7 @@ class TranscriptionManager:
     def get_transcription_by_id(self, transcription_id):
         session = self.Session()
         try:
-            current_app.logger.info(f"Получение транскрипции по transcription_id: {transcription_id}")
+            logger.info(f"Получение транскрипции по transcription_id: {transcription_id}", extra={'user_id': 'TranscriptionManager'})
             transcription = session.query(Transcription).filter_by(transcription_id=transcription_id).first()
         finally:
             session.close()
@@ -59,7 +62,7 @@ class TranscriptionManager:
     def get_transcription_by_audio_id(self, user, audio_id):
         session = self.Session()
         try:
-            current_app.logger.info(f"Получение транскрипции по audio_id: {audio_id}")
+            logger.info(f"Получение транскрипции по audio_id: {audio_id}", extra={'user_id': 'TranscriptionManager'})
             transcription = session.query(Transcription).filter_by(user=user, audio_id=audio_id).first()
             
             if transcription:
